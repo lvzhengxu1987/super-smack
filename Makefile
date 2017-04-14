@@ -392,3 +392,29 @@ dist-hook:
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
+
+UBUNTU_IMAGE          = docker-super-smack-build-ubuntu
+UBUNTU_CONTAINER_NAME = docker-super-smack-build-ubuntu-$(shell date +%s)
+CENTOS_IMAGE          = docker-super-smack-build-centos6
+CENTOS_CONTAINER_NAME = docker-super-smack-build-centos6-$(shell date +%s)
+
+.PHONY: docker/buil/ubuntu
+docker/build/ubuntu: etc/Dockerfile.ubuntu
+	docker build -f etc/Dockerfile.ubuntu -t $(UBUNTU_IMAGE) .
+
+.PHONY: rpm
+rpm:
+	docker run --name $(CENTOS_CONTAINER_NAME) -v $(shell pwd):/tmp/src $(CENTOS_IMAGE) make -C /tmp/src rpm/docker
+	docker rm $(CENTOS_CONTAINER_NAME)
+
+.PHONY: rpm/docker
+rpm/docker: clean
+	curl -sfLo /root/rpmbuild/SOURCES/super-smack-1.3.3.tar.gz https://github.com/winebarrel/super-smack/archive/1.3.3.tar.gz
+	cp super-smack.spec /root/rpmbuild/SPECS/
+	rpmbuild -ba /root/rpmbuild/SPECS/super-smack.spec
+	mv /root/rpmbuild/RPMS/x86_64/super-smack-*.rpm pkg/
+	mv /root/rpmbuild/SRPMS/super-smack-*.src.rpm pkg/
+
+.PHONY: docker/build/centos
+docker/build/centos:
+	docker build -f etc/Dockerfile.centos -t $(CENTOS_IMAGE) .

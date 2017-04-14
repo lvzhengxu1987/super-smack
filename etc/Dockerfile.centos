@@ -1,0 +1,8 @@
+FROM centos:centos6
+
+USER root
+WORKDIR /
+
+RUN yum update -y
+RUN yum install -y rpmdevtools make gcc-c++ bison flex mysql
+RUN rpmdev-setuptree
